@@ -11,19 +11,16 @@ from dotenv import load_dotenv
 # ==========================================
 # 1. KONFIGURASI KEAMANAN & DAGSHUB
 # ==========================================
-# Muat variabel lingkungan dari file .env
 load_dotenv() 
 
-# Ambil token dari .env (Lebih aman!)
+# Ambil token dari Environment Variable
 MY_TOKEN = os.getenv("DAGSHUB_TOKEN")
+DAGSHUB_USERNAME = os.getenv("MLFLOW_TRACKING_USERNAME", "NotFalzz") # Fallback ke default jika env kosong
+DAGSHUB_REPO_NAME = "Eksperimen_SML_Renn"
+TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI", f"https://dagshub.com/{DAGSHUB_USERNAME}/{DAGSHUB_REPO_NAME}.mlflow")
 
 if not MY_TOKEN:
-    raise ValueError("Token DagsHub tidak ditemukan! Pastikan file .env sudah diisi.")
-
-# Konfigurasi Akun
-DAGSHUB_USERNAME = "NotFalzz"
-DAGSHUB_REPO_NAME = "Eksperimen_SML_Renn"
-TRACKING_URI = f"https://dagshub.com/{DAGSHUB_USERNAME}/{DAGSHUB_REPO_NAME}.mlflow"
+    print("Peringatan: Token DagsHub tidak ditemukan di .env. Pastikan Secrets GitHub sudah diset jika ini berjalan di CI/CD.")
 
 print(f"Menghubungkan ke DagsHub: {DAGSHUB_REPO_NAME}...")
 
@@ -31,27 +28,27 @@ print(f"Menghubungkan ke DagsHub: {DAGSHUB_REPO_NAME}...")
 dagshub.auth.add_app_token(MY_TOKEN)
 dagshub.init(repo_owner=DAGSHUB_USERNAME, repo_name=DAGSHUB_REPO_NAME, mlflow=True)
 
-
 # Setup MLflow
-mlflow.autolog()
 mlflow.set_tracking_uri(TRACKING_URI)
 mlflow.set_experiment("Eksperimen_Credit_Risk_Renn")
+# PENTING: autolog diletakkan sebelum training dimulai
+mlflow.autolog()
 
 # ==========================================
-# 2. LOAD DATA (ANTI-ERROR PATH)
+# 2. LOAD DATA (ANTI-ERROR PATH - REVISI)
 # ==========================================
 print("Memuat data...")
 
-# Cek dua kemungkinan lokasi file (biar dijalankan dari root atau folder tetap jalan)
-path_1 = 'Membangun_model/credit_risk_preprocessing/credit_risk_clean.csv'
-path_2 = 'credit_risk_preprocessing/credit_risk_clean.csv'
+# Teknik ini memastikan Python mencari file di folder yang SAMA dengan script ini
+script_dir = os.path.dirname(os.path.abspath(__file__))
+file_path = os.path.join(script_dir, 'credit_risk_clean.csv')
 
-if os.path.exists(path_1):
-    df = pd.read_csv(path_1)
-elif os.path.exists(path_2):
-    df = pd.read_csv(path_2)
+if os.path.exists(file_path):
+    print(f"Dataset ditemukan di: {file_path}")
+    df = pd.read_csv(file_path)
 else:
-    raise FileNotFoundError("File dataset tidak ditemukan di kedua lokasi path!")
+    # Error handling yang jelas
+    raise FileNotFoundError(f"File dataset tidak ditemukan di: {file_path}. Pastikan file 'credit_risk_clean.csv' ada di dalam folder MLProject!")
 
 # Pisahkan Fitur dan Target
 X = df.drop('loan_status', axis=1)
@@ -72,12 +69,9 @@ with mlflow.start_run():
     acc = accuracy_score(y_test, model.predict(X_test))
     print(f"✅ Akurasi Model: {acc:.4f}")
     
-    # Log Metrics & Params
-    mlflow.log_param("n_estimators", 50)
-    mlflow.log_metric("accuracy", acc)
-    
-    # Log Model (Simpan model ke DagsHub)
-    mlflow.sklearn.log_model(model, "model_random_forest")
+    # Catatan: Karena sudah pakai mlflow.autolog(), kita TIDAK PERLU lagi
+    # mengetik mlflow.log_param atau log_model secara manual. 
+    # Autolog sudah merekam semuanya otomatis.
     
     print("\n🚀 SUKSES! Model dan metrik berhasil dikirim ke DagsHub.")
     print(f"Cek di sini: {TRACKING_URI}")
