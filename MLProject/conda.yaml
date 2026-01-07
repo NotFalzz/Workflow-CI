@@ -12,3 +12,5 @@ dependencies:
     - numpy
     - matplotlib
     - joblib
+    - dagshub
+    - python-dotenv
