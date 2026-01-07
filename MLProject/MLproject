@@ -1,9 +1,9 @@
 name: Credit Risk Analysis
 
-# Menggunakan lingkungan python yang ada (atau bisa diganti conda.yaml jika pakai conda)
-# Karena di Docker nanti kita install via pip, kita bisa set environment sederhana.
-conda_env: requirements.txt
+# REVISI: Arahkan ke file conda.yaml yang sudah kamu buat
+conda_env: conda.yaml
 
 entry_points:
   main:
+    # Perintah ini akan dijalankan di dalam environment tersebut
     command: "python modelling.py"
