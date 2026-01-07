@@ -1,0 +1,14 @@
+name: eksperimen-sml-env
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.12.7  # Mengunci versi python biar aman
+  - pip
+  - pip:
+    - mlflow==2.19.0
+    - scikit-learn
+    - pandas
+    - numpy
+    - matplotlib
+    - joblib

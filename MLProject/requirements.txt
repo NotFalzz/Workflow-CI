@@ -1,9 +1,0 @@
-pandas
-scikit-learn
-mlflow==2.19.0
-dagshub
-python-dotenv
-flask
-prometheus-client
-psutil          # <-- Wajib untuk Inference.py kamu
-werkzeug        # <-- Wajib untuk middleware

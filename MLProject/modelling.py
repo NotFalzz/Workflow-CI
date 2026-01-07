@@ -41,14 +41,14 @@ print("Memuat data...")
 
 # Teknik ini memastikan Python mencari file di folder yang SAMA dengan script ini
 script_dir = os.path.dirname(os.path.abspath(__file__))
-file_path = os.path.join(script_dir, 'credit_risk_clean.csv')
+file_path = os.path.join(script_dir, 'credit_risk_preprocessing.csv')
 
 if os.path.exists(file_path):
     print(f"Dataset ditemukan di: {file_path}")
     df = pd.read_csv(file_path)
 else:
     # Error handling yang jelas
-    raise FileNotFoundError(f"File dataset tidak ditemukan di: {file_path}. Pastikan file 'credit_risk_clean.csv' ada di dalam folder MLProject!")
+    raise FileNotFoundError(f"File dataset tidak ditemukan di: {file_path}. Pastikan file 'credit_risk_preprocessing.csv' ada di dalam folder MLProject!")
 
 # Pisahkan Fitur dan Target
 X = df.drop('loan_status', axis=1)
