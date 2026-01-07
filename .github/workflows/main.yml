@@ -1,10 +1,12 @@
-name: CI/CD Pipeline MLOps Renn
+name: MLOps Credit Risk Pipeline
 
 on:
   push:
-    branches: [ "master", "main" ]
+    branches:
+      - main
   pull_request:
-    branches: [ "master", "main" ]
+    branches:
+      - main
 
 jobs:
   build-and-train:
@@ -14,36 +16,26 @@ jobs:
     - name: Checkout Code
       uses: actions/checkout@v4
 
-    - name: Set up Python 3.12
-      uses: actions/setup-python@v4
+    - name: Set up Conda
+      uses: conda-incubator/setup-miniconda@v3
       with:
-        python-version: "3.12"
+        auto-update-conda: true
+        python-version: '3.12'
+        environment-file: MLProject/conda.yaml
+        activate-environment: eksperimen-sml-env
 
-    - name: Install Dependencies
+    - name: Verify Conda Environment
+      shell: bash -l {0}
       run: |
-        python -m pip install --upgrade pip
-        # Kita install library dari file requirements yang ada di folder baru
-        # Pastikan path ini sesuai dengan struktur folder kamu di GitHub
-        if [ -f Workflow-CI/MLProject/requirements.txt ]; then
-          pip install -r Workflow-CI/MLProject/requirements.txt
-        elif [ -f MLProject/requirements.txt ]; then
-          pip install -r MLProject/requirements.txt
-        else
-          echo "Requirements.txt tidak ditemukan!"
-          exit 1
-        fi
+        conda info
+        conda list
 
     - name: Run Model Training & Track to DagsHub
+      shell: bash -l {0}
       env:
-        # Kita hanya butuh Token ini, karena URI sudah ada di dalam script python
         DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
+        MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
+        MLFLOW_TRACKING_USERNAME: ${{ secrets.MLFLOW_TRACKING_USERNAME }}
+        MLFLOW_TRACKING_PASSWORD: ${{ secrets.MLFLOW_TRACKING_PASSWORD }}
       run: |
-        # Robot menjalankan script modelling dari folder yang benar
-        if [ -f Workflow-CI/MLProject/modelling.py ]; then
-          python Workflow-CI/MLProject/modelling.py
-        elif [ -f MLProject/modelling.py ]; then
-          python MLProject/modelling.py
-        else
-          echo "Script modelling.py tidak ditemukan!"
-          exit 1
-        fi
+        python MLProject/modelling.py
