@@ -1,10 +1,7 @@
-name: MLOps Credit Risk Pipeline
+name: MLflow CI Training
 
 on:
   push:
-    branches:
-      - main
-  pull_request:
     branches:
       - main
 
@@ -13,30 +10,25 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout Code
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Set up Python 3.12
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.12' 
-        # Menggunakan 3.12 sesuai rekomendasi modul
+      - name: Set up Miniconda
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          activate-environment: mlflow-env
+          environment-file: MLProject/conda.yaml
+          auto-activate-base: false
 
-    - name: Install Dependencies
-      run: |
-        python -m pip install --upgrade pip
-        # Path requirements.txt ada di dalam folder MLProject
-        pip install -r MLProject/requirements.txt
-        # Memastikan mlflow versi yang diminta terinstall (opsional jika sudah ada di txt)
-        pip install mlflow==2.19.0
+      - name: Install MLflow
+        run: |
+          conda activate mlflow-env
+          pip install mlflow
 
-    - name: Run Model Training & Track to DagsHub
-      # Pastikan Secrets ini sudah diset di repo "Workflow-CI"
-      env:
-        DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
-        MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
-        MLFLOW_TRACKING_USERNAME: ${{ secrets.MLFLOW_TRACKING_USERNAME }}
-        MLFLOW_TRACKING_PASSWORD: ${{ secrets.MLFLOW_TRACKING_PASSWORD }}
-      run: |
-        # Menjalankan script modelling.py yang ada di dalam folder MLProject
-        python MLProject/modelling.py
+      - name: Run MLflow Project
+        run: |
+          conda activate mlflow-env
+          cd MLProject
+          mlflow run . \
+            -P data_path=credit_risk_preprocessing.csv
+
